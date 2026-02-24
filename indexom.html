@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Om Gole — Operator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #080808;
+    --surface: #0e0e0e;
+    --surface2: #141414;
+    --border: rgba(255,255,255,0.07);
+    --gold: #c9a84c;
+    --gold-dim: rgba(201,168,76,0.15);
+    --gold-line: rgba(201,168,76,0.35);
+    --white: #f0ede8;
+    --muted: rgba(240,237,232,0.4);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--serif);
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CUSTOM CURSOR */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid var(--gold-line);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1), width 0.3s, height 0.3s, opacity 0.3s;
+    transform: translate(-50%, -50%);
+  }
+  body:has(a:hover) .cursor-ring,
+  body:has(button:hover) .cursor-ring {
+    width: 56px; height: 56px;
+    opacity: 0.5;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 4rem;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.4s, background 0.4s, backdrop-filter 0.4s;
+  }
+  nav.scrolled {
+    border-color: var(--border);
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links {
+    display: flex;
+    gap: 3rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.3s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-links a:hover::after { width: 100%; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 8rem 4rem 6rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.3s forwards;
+  }
+
+  .hero-name {
+    font-size: clamp(4rem, 8vw, 7.5rem);
+    font-weight: 300;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    opacity: 0;
+    animation: fadeUp 0.9s ease 0.5s forwards;
+  }
+  .hero-name em {
+    font-style: italic;
+    color: var(--gold);
+    display: block;
+  }
+
+  .hero-tagline {
+    margin-top: 3rem;
+    font-size: 1.05rem;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 380px;
+    opacity: 0;
+    animation: fadeUp 0.9s ease 0.75s forwards;
+  }
+
+  .hero-cta {
+    margin-top: 3.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    opacity: 0;
+    animation: fadeUp 0.9s ease 1s forwards;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 2rem;
+    background: var(--gold);
+    color: var(--black);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    font-weight: 400;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .btn-primary:hover { background: #e0ba5a; transform: translateY(-2px); }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 2rem;
+    border: 1px solid var(--gold-line);
+    color: var(--gold);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: border-color 0.3s, background 0.3s, transform 0.3s;
+  }
+  .btn-ghost:hover { background: var(--gold-dim); transform: translateY(-2px); }
+
+  .hero-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 8rem 4rem 6rem;
+    position: relative;
+    z-index: 2;
+    border-left: 1px solid var(--border);
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-rows: repeat(3, auto);
+    gap: 2.5rem;
+    opacity: 0;
+    animation: fadeIn 1.2s ease 1.2s forwards;
+  }
+
+  .stat-item {
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .stat-value {
+    font-size: 2.4rem;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .stat-desc {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* VERTICAL LINE DECOR */
+  .hero-line {
+    position: absolute;
+    left: 50%;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--gold-line) 30%, var(--gold-line) 70%, transparent);
+    z-index: 1;
+  }
+
+  /* SCROLL INDICATOR */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeIn 1s ease 2s forwards;
+  }
+  .scroll-hint::after {
+    content: '';
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--gold-line), transparent);
+    animation: scrollPulse 2s ease infinite;
+  }
+
+  /* SECTIONS */
+  section {
+    position: relative;
+    z-index: 2;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 2rem;
+    margin-bottom: 5rem;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+  }
+  .section-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .section-title em { font-style: italic; color: var(--gold); }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ABOUT */
+  #about {
+    padding: 10rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .about-left {}
+  .about-text {
+    font-size: 1.15rem;
+    line-height: 1.85;
+    color: rgba(240,237,232,0.75);
+    font-weight: 300;
+    margin-bottom: 2rem;
+  }
+  .about-text strong {
+    color: var(--white);
+    font-weight: 600;
+  }
+  .about-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .skill-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .skill-item {
+    background: var(--surface);
+    padding: 1.5rem;
+    transition: background 0.3s;
+  }
+  .skill-item:hover { background: var(--surface2); }
+  .skill-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.7rem;
+    color: var(--gold);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+  .skill-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .skill-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    line-height: 1.5;
+  }
+
+  /* VENTURES */
+  #ventures {
+    padding: 6rem 4rem 10rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-top: 1px solid var(--border);
+  }
+  .ventures-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .venture-card {
+    background: var(--surface);
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    transition: background 0.4s;
+  }
+  .venture-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .venture-card:hover { background: var(--surface2); }
+  .venture-card:hover::before { transform: scaleX(1); }
+
+  .venture-number {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 2rem;
+  }
+  .venture-title {
+    font-size: 1.6rem;
+    font-weight: 300;
+    line-height: 1.2;
+    margin-bottom: 1.2rem;
+    letter-spacing: -0.01em;
+  }
+  .venture-title em { font-style: italic; color: var(--gold); }
+  .venture-desc {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .venture-tag {
+    display: inline-block;
+    margin-top: 2rem;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--gold-line);
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  /* PROJECTS */
+  #projects {
+    padding: 6rem 4rem 10rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-top: 1px solid var(--border);
+  }
+  .projects-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .project-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto auto;
+    align-items: center;
+    gap: 3rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+    cursor: none;
+    transition: padding-left 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+  }
+  .project-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: var(--gold-dim);
+    transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    z-index: 0;
+  }
+  .project-row:hover { padding-left: 1.5rem; }
+  .project-row:hover::before { width: 4px; }
+  .project-row > * { position: relative; z-index: 1; }
+
+  .project-num {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+  }
+  .project-name {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+  }
+  .project-tech {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-align: right;
+  }
+  .project-status {
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.7rem;
+    border-radius: 0;
+  }
+  .status-live {
+    border: 1px solid rgba(100, 220, 140, 0.4);
+    color: rgba(100, 220, 140, 0.8);
+    background: rgba(100, 220, 140, 0.05);
+  }
+  .status-dev {
+    border: 1px solid var(--gold-line);
+    color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  /* CONTACT */
+  #contact {
+    padding: 6rem 4rem 8rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-top: 1px solid var(--border);
+  }
+  .contact-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: start;
+  }
+  .contact-left {}
+  .contact-headline {
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 300;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+  .contact-headline em { font-style: italic; color: var(--gold); }
+  .contact-sub {
+    font-size: 1rem;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: var(--white);
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--border);
+    transition: border-color 0.3s, background 0.3s;
+    font-size: 0.9rem;
+  }
+  .contact-link:hover {
+    border-color: var(--gold-line);
+    background: var(--gold-dim);
+  }
+  .contact-link-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+    min-width: 60px;
+  }
+  .contact-right {}
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .form-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .form-input, .form-textarea {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 0.9rem 1.2rem;
+    font-family: var(--serif);
+    font-size: 1rem;
+    font-weight: 300;
+    outline: none;
+    transition: border-color 0.3s;
+    resize: none;
+  }
+  .form-input:focus, .form-textarea:focus {
+    border-color: var(--gold-line);
+  }
+  .form-input::placeholder, .form-textarea::placeholder {
+    color: var(--muted);
+  }
+  .form-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 2.5rem;
+    background: var(--gold);
+    color: var(--black);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 400;
+    border: none;
+    cursor: none;
+    transition: background 0.3s, transform 0.3s;
+    align-self: flex-start;
+  }
+  .form-submit:hover { background: #e0ba5a; transform: translateY(-2px); }
+
+  /* FOOTER */
+  footer {
+    padding: 2rem 4rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  .footer-copy {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .footer-copy span { color: var(--gold); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.2); }
+  }
+
+  /* REVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* DIAGONAL ACCENT */
+  .diagonal-accent {
+    position: absolute;
+    top: 0; right: 0;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 60%, rgba(201,168,76,0.03) 100%);
+    pointer-events: none;
+  }
+
+  @media (max-width: 900px) {
+    nav { padding: 1.5rem 2rem; }
+    .nav-links { gap: 1.5rem; }
+    #hero { grid-template-columns: 1fr; }
+    .hero-right { border-left: none; border-top: 1px solid var(--border); padding: 4rem 2rem 6rem; }
+    .hero-left { padding: 8rem 2rem 4rem; }
+    #about { grid-template-columns: 1fr; padding: 6rem 2rem; gap: 4rem; }
+    .ventures-grid { grid-template-columns: 1fr; }
+    #ventures, #projects, #contact { padding: 5rem 2rem 6rem; }
+    .contact-inner { grid-template-columns: 1fr; gap: 4rem; }
+    .project-row { grid-template-columns: 50px 1fr; }
+    .project-tech, .project-status { display: none; }
+    footer { padding: 2rem; flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#hero" class="nav-logo">OM<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#ventures">Ventures</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="diagonal-accent"></div>
+  <div class="hero-line"></div>
+
+  <div class="hero-left">
+    <p class="hero-eyebrow">Computer Engineer · Trader · Builder</p>
+    <h1 class="hero-name">
+      Om<br>
+      <em>Gole</em>
+    </h1>
+    <p class="hero-tagline">
+      Engineering structured frameworks. Building scalable systems. Executing with discipline.
+    </p>
+    <div class="hero-cta">
+      <a href="#ventures" class="btn-primary">View Ventures →</a>
+      <a href="#contact" class="btn-ghost">Partner With Me</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-label">// Domain 01</div>
+        <div class="stat-value">Markets</div>
+        <div class="stat-desc">Forex & Gold — ICT, Smart Money, Institutional Flow</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">// Domain 02</div>
+        <div class="stat-value">Systems</div>
+        <div class="stat-desc">Automation, Dashboards, Assembly-level Engineering</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">// Domain 03</div>
+        <div class="stat-value">Brands</div>
+        <div class="stat-desc">Gen Z Commerce — Print-on-Demand, Market Positioning</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">Scroll</div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-left reveal">
+    <div class="section-header">
+      <span class="section-num">// 01</span>
+      <h2 class="section-title">The <em>Operator</em></h2>
+      <div class="section-line"></div>
+    </div>
+    <p class="about-text">
+      I'm a <strong>Computer Engineering student</strong> who treats every domain like an engineering problem — 
+      markets are systems, businesses are machines, and capital is a resource to be allocated with precision.
+    </p>
+    <p class="about-text">
+      My edge lives at the intersection of <strong>analytical rigor and execution velocity</strong>. 
+      I don't just study markets — I build frameworks to operate inside them. I don't just build products — 
+      I design systems that scale without me.
+    </p>
+    <p class="about-text">
+      The long-term mission is clear: become a <strong>high-level operator and CEO</strong>, running 
+      multiple income streams across trading, technology, and brand-driven commerce.
+    </p>
+  </div>
+  <div class="about-right reveal">
+    <div class="skill-list">
+      <div class="skill-item">
+        <div class="skill-icon">// MKTS</div>
+        <div class="skill-name">Forex & Gold Trading</div>
+        <div class="skill-sub">ICT · Liquidity · Smart Money · XAUUSD</div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-icon">// RISK</div>
+        <div class="skill-name">Risk Architecture</div>
+        <div class="skill-sub">Prop Firm Strategy · Capital Preservation · R:R Systems</div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-icon">// CODE</div>
+        <div class="skill-name">Technical Dev</div>
+        <div class="skill-sub">Assembly · Dashboards · Automation Tools</div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-icon">// BSNS</div>
+        <div class="skill-name">Brand Strategy</div>
+        <div class="skill-sub">Gen Z Commerce · POD · Market Positioning</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VENTURES -->
+<section id="ventures">
+  <div class="section-header reveal">
+    <span class="section-num">// 02</span>
+    <h2 class="section-title">Business <em>Ventures</em></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="ventures-grid">
+    <div class="venture-card reveal">
+      <div class="venture-number">// 001</div>
+      <h3 class="venture-title">Prop Firm<br><em>Capital Trading</em></h3>
+      <p class="venture-desc">Operating systematic trading strategies on funded accounts. Focus on XAUUSD and Forex pairs using ICT institutional concepts, liquidity engineering, and disciplined risk management.</p>
+      <span class="venture-tag">Active</span>
+    </div>
+    <div class="venture-card reveal">
+      <div class="venture-number">// 002</div>
+      <h3 class="venture-title">Print-on-Demand<br><em>Brand Empire</em></h3>
+      <p class="venture-desc">Building Gen Z-targeted e-commerce brands rooted in cultural psychology and market positioning. Scaling through strategic brand identity and data-driven product selection.</p>
+      <span class="venture-tag">Scaling</span>
+    </div>
+    <div class="venture-card reveal">
+      <div class="venture-number">// 003</div>
+      <h3 class="venture-title">Tech-Driven<br><em>Ventures</em></h3>
+      <p class="venture-desc">Developing software tools and automation systems that solve real operational problems — from trading dashboards to workflow automation. Technology as scalable business infrastructure.</p>
+      <span class="venture-tag">Building</span>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-header reveal">
+    <span class="section-num">// 03</span>
+    <h2 class="section-title">Tech <em>Projects</em></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="projects-list">
+    <div class="project-row reveal">
+      <span class="project-num">// 001</span>
+      <span class="project-name">Trading Analytics Dashboard</span>
+      <span class="project-tech">Python · Data Viz · Market APIs</span>
+      <span class="project-status status-dev">In Dev</span>
+    </div>
+    <div class="project-row reveal">
+      <span class="project-num">// 002</span>
+      <span class="project-name">ICT Market Structure Scanner</span>
+      <span class="project-tech">Pine Script · TradingView</span>
+      <span class="project-status status-live">Live</span>
+    </div>
+    <div class="project-row reveal">
+      <span class="project-num">// 003</span>
+      <span class="project-name">Assembly-Level System Projects</span>
+      <span class="project-tech">x86 Assembly · C · Low-level</span>
+      <span class="project-status status-live">Live</span>
+    </div>
+    <div class="project-row reveal">
+      <span class="project-num">// 004</span>
+      <span class="project-name">E-Commerce Automation Suite</span>
+      <span class="project-tech">Python · Automation · APIs</span>
+      <span class="project-status status-dev">In Dev</span>
+    </div>
+    <div class="project-row reveal">
+      <span class="project-num">// 005</span>
+      <span class="project-name">Risk Management Framework</span>
+      <span class="project-tech">Spreadsheet Systems · Modeling</span>
+      <span class="project-status status-live">Live</span>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-header reveal">
+    <span class="section-num">// 04</span>
+    <h2 class="section-title">Let's <em>Connect</em></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="contact-inner">
+    <div class="contact-left reveal">
+      <h3 class="contact-headline">Open to <em>investors,</em> partners & collaborators</h3>
+      <p class="contact-sub">
+        If you're building something serious, looking for a technical co-founder, 
+        or want to discuss markets and capital — I'm interested in the right conversations.
+      </p>
+      <div class="contact-links">
+        <a href="mailto:om@example.com" class="contact-link">
+          <span class="contact-link-label">Email</span>
+          om@example.com
+        </a>
+        <a href="#" class="contact-link">
+          <span class="contact-link-label">LinkedIn</span>
+          /in/omgole
+        </a>
+        <a href="#" class="contact-link">
+          <span class="contact-link-label">Twitter</span>
+          @omgole
+        </a>
+      </div>
+    </div>
+    <div class="contact-right reveal">
+      <form class="contact-form" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">// Name</label>
+          <input type="text" class="form-input" placeholder="Your name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">// Email</label>
+          <input type="email" class="form-input" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">// Intention</label>
+          <textarea class="form-textarea" rows="4" placeholder="Tell me what you're building or proposing..." required></textarea>
+        </div>
+        <button type="submit" class="form-submit">Send Message →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-copy">© 2025 <span>Om Gole</span>. All rights reserved.</span>
+  <span class="footer-copy">Engineered with precision. Built to scale.</span>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+
+  function animateRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  // Nav scroll
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        entry.target.style.transitionDelay = (i * 0.05) + 's';
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Form
+  function handleSubmit(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('.form-submit');
+    btn.textContent = 'Message Sent ✓';
+    btn.style.background = '#4caf82';
+    setTimeout(() => {
+      btn.textContent = 'Send Message →';
+      btn.style.background = '';
+      e.target.reset();
+    }, 3000);
+  }
+</script>
+</body>
+</html>
